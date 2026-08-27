@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>稳站云 - 上传文件</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: #f0f2f5; padding-top: 2rem; }
+        .card { border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        .btn-primary { background: #0066ff; border: none; }
+        .btn-primary:hover { background: #0052cc; }
+        .file-drop { border: 2px dashed #ccc; border-radius: 8px; padding: 2rem; text-align: center; margin-bottom: 1rem; }
+        .file-drop:hover { border-color: #0066ff; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card p-4" style="max-width: 600px; margin: 0 auto;">
+            <h3 class="text-center mb-4">上传你的代码</h3>
+            <p id="welcomeUser" class="text-success text-center fw-bold"></p>
+            
+            <div class="file-drop">
+                <input type="file" id="fileInput" class="form-control" multiple>
+            </div>
+            
+            <button id="uploadBtn" class="btn btn-primary w-100">开始上传</button>
+            <div id="msg" class="text-center mt-3" style="color:#666; min-height: 24px;"></div>
+            
+            <div class="text-center mt-3">
+                <a href="dashboard.html" class="text-decoration-none" style="color:#0066ff;">返回控制台</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const username = localStorage.getItem('wzy_username');
+        const token = localStorage.getItem('wzy_token');
+        
+        if (!username || !token) {
+            alert('请先登录！');
+            window.location.href = 'login.html';
+        } else {
+            document.getElementById('welcomeUser').innerText = '当前用户: ' + username;
+        }
+
+        document.getElementById('uploadBtn').onclick = async () => {
+            const files = document.getElementById('fileInput').files;
+            const msgDiv = document.getElementById('msg');
+            
+            if (files.length === 0) {
+                msgDiv.innerText = '请先选择文件哦！';
+                msgDiv.style.color = '#ff4d4f';
+                return;
+            }
+
+            msgDiv.innerText = '正在上传...';
+            msgDiv.style.color = '#0066ff';
+            let successCount = 0;
+
+            for (let file of files) {
+                try {
+                    const content = await new Promise(resolve => {
+                        const reader = new FileReader();
+                        reader.onload = () => resolve(reader.result.split(',')[1]);
+                        reader.readAsDataURL(file);
+                    });
+
+                    const res = await fetch(`https://api.github.com/repos/renjianzhan/wenzhanyun/contents/users/${username}/${file.name}`, {
+                        method: 'PUT',
+                        headers: { 
+                            'Authorization': `token ${token}`, 
+                            'Content-Type': 'application/json' 
+                        },
+                        body: JSON.stringify({
+                            message: `Upload ${file.name} via Wenzhanyun`,
+                            content: content,
+                            branch: 'main'
+                        })
+                    });
+
+                    if (res.ok) successCount++;
+                } catch (e) {
+                    console.error(e);
+                }
+            }
+
+            msgDiv.innerText = `上传完成！成功 ${successCount} / ${files.length} 个文件`;
+            msgDiv.style.color = '#52c41a';
+        };
+    </script>
+</body>
+</html>
