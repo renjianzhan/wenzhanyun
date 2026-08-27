@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>稳站云 - 控制台</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+</head>
+<body class="hold-transition layout-fixed">
+<div class="wrapper">
+    <nav class="main-header navbar navbar-expand navbar-white navbar-light">
+        <ul class="navbar-nav ml-auto">
+            <li class="nav-item"><span class="nav-link" id="welcomeText">欢迎</span></li>
+            <li class="nav-item"><a class="nav-link" href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> 退出</a></li>
+        </ul>
+    </nav>
+    <aside class="main-sidebar sidebar-dark-primary elevation-4">
+        <a href="/dashboard.html" class="brand-link"><span class="brand-text font-weight-light ml-3">稳站云</span></a>
+        <div class="sidebar">
+            <nav class="mt-2">
+                <ul class="nav nav-pills nav-sidebar flex-column">
+                    <li class="nav-item"><a href="/dashboard.html" class="nav-link active"><i class="nav-icon fas fa-tachometer-alt"></i><p>控制台</p></a></li>
+                    <li class="nav-item"><a href="/upload.html" class="nav-link"><i class="nav-icon fas fa-upload"></i><p>上传文件</p></a></li>
+                </ul>
+            </nav>
+        </div>
+    </aside>
+    <div class="content-wrapper">
+        <section class="content-header"><div class="container-fluid"><h1>我的代码空间 <small>(100MB)</small></h1></div></section>
+        <section class="content">
+            <div class="card">
+                <div class="card-header"><h3 class="card-title">文件列表</h3></div>
+                <div class="card-body table-responsive p-0">
+                    <table class="table table-hover text-nowrap">
+                        <thead><tr><th>文件名</th><th>类型</th><th>大小</th><th>操作</th></tr></thead>
+                        <tbody id="fileList"><tr><td colspan="4" class="text-center py-4">加载中...</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
+<script>
+const token = localStorage.getItem('wzy_token');
+if (!token) window.location.href = '/login.html';
+
+async function init() {
+    const res = await fetch('/api/user/info', { headers: { 'Authorization': 'Bearer ' + token } }).then(r => r.json());
+    if (!res.username) { window.location.href = '/login.html'; return; }
+    $('#welcomeText').text('欢迎, ' + res.username);
+    loadFiles();
+}
+
+async function loadFiles() {
+    const res = await fetch('/api/files/list', { headers: { 'Authorization': 'Bearer ' + token } }).then(r => r.json());
+    const tbody = $('#fileList'); tbody.empty();
+    if (res.files && res.files.length > 0) {
+        res.files.forEach(f => {
+            tbody.append('<tr><td><i class="fas fa-file-code text-primary mr-2"></i>' + f.name + '</td><td>' + f.type + '</td><td>' + f.size + '</td><td><a href="' + f.url + '" target="_blank" class="btn btn-xs btn-info">访问</a></td></tr>');
+        });
+    } else {
+        tbody.append('<tr><td colspan="4" class="text-center text-muted py-4">暂无文件，去上传吧！</td></tr>');
+    }
+}
+
+function logout() { localStorage.removeItem('wzy_token'); window.location.href = '/login.html'; }
+init();
+</script>
+</body>
+</html>
