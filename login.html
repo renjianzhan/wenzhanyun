@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>稳站云 - 登录</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css">
+</head>
+<body class="hold-transition login-page">
+<div class="login-box">
+    <div class="card card-outline card-primary">
+        <div class="card-header text-center"><h1><b>稳站云</b></h1></div>
+        <div class="card-body">
+            <p class="login-box-msg">登录您的代码空间</p>
+            <form id="loginForm">
+                <div class="input-group mb-3">
+                    <input type="text" id="user" class="form-control" placeholder="用户名">
+                    <div class="input-group-append"><div class="input-group-text"><i class="fas fa-user"></i></div></div>
+                </div>
+                <div class="input-group mb-3">
+                    <input type="password" id="pass" class="form-control" placeholder="密码">
+                    <div class="input-group-append"><div class="input-group-text"><i class="fas fa-lock"></i></div></div>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">登录</button>
+            </form>
+            <p class="mt-3 text-center">没有账号？<a href="/register.html">立即注册</a></p>
+        </div>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+<script>
+$(document).ready(function() {
+    $('#loginForm').on('submit', async function(e) {
+        e.preventDefault();
+        const btn = $(this).find('button');
+        const originalText = btn.text();
+        btn.text('登录中...').prop('disabled', true);
+        
+        try {
+            const res = await fetch('/api/user/login', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ 
+                    username: $('#user').val(), 
+                    password: $('#pass').val() 
+                })
+            });
+            const data = await res.json();
+            console.log('登录接口返回:', data);
+            
+            if (data.token) {
+                localStorage.setItem('wzy_token', data.token);
+                alert('登录成功！即将跳转...');
+                window.location.href = '/dashboard.html';
+            } else {
+                alert(data.error || '登录失败，请检查账号密码');
+            }
+        } catch (err) {
+            console.error('登录请求报错:', err);
+            alert('系统错误：' + err.message);
+        } finally {
+            btn.text(originalText).prop('disabled', false);
+        }
+    });
+});
+</script>
+</body>
+</html>
